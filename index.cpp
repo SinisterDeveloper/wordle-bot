@@ -26,9 +26,9 @@ string guessWord(vector<string>& words) {
     return words[dist(gen)];
 }
 
-// void eliminateValids(vector<string>& words, string word, vector<int> correct, vector<int> inaccurate) {
+void eliminateOptions(vector<string>& words, string& word, string& correct, string& inaccurate) {
     
-// }
+}
 
 int main() {
     cout << "Hi sucker. Try beating me in Wordle hehe. Lemme finish grab my gear gimme a sec...\n";
@@ -59,9 +59,10 @@ int main() {
         cout << "Enter the positions of inaccurate letters";
         cin >> inaccurate;
 
+        eliminateOptions(words, word, correct, inaccurate);
+
         guesses++;
     }
 
     return 0;
-
 }
