@@ -100,10 +100,10 @@ int main() {
         word = guessWord(words);
         if (word.empty()) {
             cout << "No candidates left.\n";
-            return 0;
+            return 1;
         }
 
-        cout << "Guess #" << guesses + 1 << ": " << word << "\n\n";
+        cout << "\nGuess #" << guesses + 1 << ": " << word << "\n\n";
 
         cout << "Enter the positions of correct letters: ";
         cin >> correct;
@@ -111,7 +111,7 @@ int main() {
             correct.clear();
 
         if (correct.size() == 5) {
-            cout << "Bot reports win.\n";
+            cout << "I won! haha! you suck lol\n";
             return 0;
         }
 
