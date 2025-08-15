@@ -6,17 +6,29 @@
 
 using namespace std;
 
-// bool checkCorrect() {
+bool checkCorrect(string& source, string& target, vector<int>& correct) {
+    for (int pos : correct) 
+        if (source[pos] != target[pos]) 
+            return true;
+        
+    return false;
+}
 
-// }
+bool checkInaccurate(string &source, string &target, vector<int> &inaccurate) {
+    for (int pos : inaccurate)
+        if (target[pos] == source[pos] || target.find(source[pos]) == string::npos)
+            return true;
 
-// bool checkInaccurate() {
+    return false;
+}
 
-// }
-
-// bool checkIncorrect() {
-
-// }
+bool checkIncorrect(string &source, string &target, vector<int> &incorrect) {
+    for (int pos : incorrect) 
+        if (target.find(source[pos]) != string::npos) 
+            return true;
+        
+    return false;
+}
 
 string guessWord(vector<string>& words) {
     random_device rd;
