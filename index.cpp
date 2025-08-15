@@ -39,7 +39,25 @@ string guessWord(vector<string>& words) {
 }
 
 void eliminateOptions(vector<string>& words, string& word, string& correct, string& inaccurate) {
+    vector<int> correctInt, inaccurateInt, incorrectInt;
+
+    for (char c : correct) 
+        correctInt.push_back(c - '0');
+
+    for (char c : inaccurate) 
+        inaccurateInt.push_back(c - '0');
     
+    for (int i = 0; i < 5; i++) {
+        if (correct.find(i) == string::npos && inaccurate.find('0' + i) == string::npos) incorrectInt.push_back(i);
+    }
+
+    words.erase(
+        remove_if(words.begin(), words.end(),
+                  [&word, &correctInt, &inaccurateInt, &incorrectInt](string &s)
+                  {
+                      return checkCorrect(word, s, correctInt) || checkInaccurate(word, s, inaccurateInt) || checkIncorrect(word, s, incorrectInt);
+                  }),
+        words.end());
 }
 
 int main() {
@@ -60,7 +78,7 @@ int main() {
         word = guessWord(words);
         cout << "Guess #" << guesses + 1 << ": " << word << "\n\n";
 
-        cout << "Enter the positions of correct letters";
+        cout << "Enter the positions of correct letters: ";
         cin >> correct;
 
         if (correct.size() == 5) {
@@ -68,7 +86,7 @@ int main() {
             return 1;
         }
 
-        cout << "Enter the positions of inaccurate letters";
+        cout << "Enter the positions of inaccurate letters: ";
         cin >> inaccurate;
 
         eliminateOptions(words, word, correct, inaccurate);
