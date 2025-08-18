@@ -5,8 +5,12 @@
 #include <random>
 #include <algorithm>
 #include <cctype>
+#include<unordered_map>
 
 using namespace std;
+
+random_device rd;
+mt19937 gen(rd());
 
 bool checkCorrect(const string &source, const string &target, const vector<int> &correct) {
     for (int pos : correct)
@@ -43,11 +47,40 @@ bool checkIncorrect(const string &source, const string &target, const vector<int
 string guessWord(const vector<string> &words) {
     if (words.empty()) return "";
 
-    random_device rd;
-    mt19937 gen(rd());
     uniform_int_distribution<int> dist(0, static_cast<int>(words.size()) - 1);
 
     return words[dist(gen)];
+}
+
+/**
+ * 
+ * Correct - G (green)
+ * Inaccurate - Y (yellow)
+ * Incorrect - B (black/grey)
+ * 
+ * 
+ */
+string getFeedback(string word, string guess) {
+    string feedback(5, 'B');
+    unordered_map<char, int> freq;
+
+    for (char c : word) freq[c]++;
+
+    for (int i = 0; i < 5; i++) 
+        if (word[i] == guess[i]) {
+            feedback[i] = 'G';
+            freq[guess[i]]--;
+        }
+    
+
+    for (int i = 0; i < 5; i++) 
+        if (feedback[i] == 'B' && freq[guess[i]] > 0) {
+            feedback[i] = 'Y';
+            freq[guess[i]]--;
+        }
+    
+
+    return feedback;
 }
 
 void eliminateOptions(vector<string> &words, const string &word, const string &correct, const string &inaccurate) {
@@ -136,9 +169,8 @@ int play(const string &hiddenWord = "") {
 
     while (guesses < 6) {
         word = guessWord(words);
-        if (word.empty())
-        {
-            cout << "No candidates left.\n";
+        if (word.empty()) {
+            cout << "No words left.\n";
             return 0;
         }
 
