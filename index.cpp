@@ -12,38 +12,6 @@ using namespace std;
 random_device rd;
 mt19937 gen(rd());
 
-bool checkCorrect(const string &source, const string &target, const vector<int> &correct) {
-    for (int pos : correct)
-        if (pos < 0 || pos >= static_cast<int>(source.size()) || source[pos] != target[pos])
-            return true;
-
-    return false;
-}
-
-bool checkInaccurate(const string &source, const string &target, const vector<int> &inaccurate) {
-    for (int pos : inaccurate) {
-        if (pos < 0 || pos >= static_cast<int>(source.size()))
-            return true;
-        char ch = source[pos];
-        if (target[pos] == ch)
-            return true;
-        if (target.find(ch) == string::npos)
-            return true;
-    }
-    return false;
-}
-
-bool checkIncorrect(const string &source, const string &target, const vector<int> &incorrect) {
-    for (int pos : incorrect) {
-        if (pos < 0 || pos >= static_cast<int>(source.size())) continue;
-
-        char ch = source[pos];
-        if (target.find(ch) != string::npos)
-            return true;
-    }
-    return false;
-}
-
 string guessWord(const vector<string> &words) {
     if (words.empty()) return "";
 
@@ -51,6 +19,14 @@ string guessWord(const vector<string> &words) {
 
     return words[dist(gen)];
 }
+
+auto validateResult = [](const string &r) {
+    if (r.size() != 5) return false;
+
+    for (char c : r) if (c != 'G' && c != 'Y' && c != 'B') return false;
+
+    return true;
+};
 
 /**
  * 
@@ -83,31 +59,12 @@ string getFeedback(string word, string guess) {
     return feedback;
 }
 
-void eliminateOptions(vector<string> &words, const string &word, const string &correct, const string &inaccurate) {
-    vector<int> correctInt, inaccurateInt, incorrectInt;
-
-    for (char c : correct)
-        if (isdigit(static_cast<unsigned char>(c)))
-            correctInt.push_back(c - '0');
-
-    for (char c : inaccurate)
-        if (isdigit(static_cast<unsigned char>(c)))
-            inaccurateInt.push_back(c - '0');
-
-    for (int i = 0; i < 5; ++i) {
-        char digit = static_cast<char>('0' + i);
-
-        if (correct.find(digit) == string::npos && inaccurate.find(digit) == string::npos)
-            incorrectInt.push_back(i);
-    }
-
+void eliminateOptions(vector<string> &words, const string &guess, const string& result) {
     words.erase(
         remove_if(words.begin(), words.end(),
-                  [&word, &correctInt, &inaccurateInt, &incorrectInt](const string &s) -> bool
+                  [&guess, &result](const string &word) -> bool
                   {
-                      return checkCorrect(word, s, correctInt)
-                          || checkInaccurate(word, s, inaccurateInt)
-                          || checkIncorrect(word, s, incorrectInt);
+                      return getFeedback(word, guess) != result;
                   }),
         words.end());
 }
@@ -125,33 +82,23 @@ int play(const string &hiddenWord = "") {
 
         int guesses = 0;
         while (guesses < 6) {
-            string word = guessWord(words);
-            if (word.empty())
+            string guess = guessWord(words);
+            if (guess.empty())
                 return -1;
-            
 
-            if (word == hiddenWord)
+            if (guess == hiddenWord)
                 return guesses + 1;
 
             string correct, inaccurate;
-            for (int i = 0; i < 5; ++i) {
 
-                if (word[i] == hiddenWord[i])
-                    correct.push_back('0' + i);
-
-                else if (hiddenWord.find(word[i]) != string::npos)
-                    inaccurate.push_back('0' + i);
-
-            }
-
-            eliminateOptions(words, word, correct, inaccurate);
+            eliminateOptions(words, guess, getFeedback(hiddenWord, guess));
             ++guesses;
         }
 
         return -1;
     }
 
-    cout << "Hi sucker. Try defeating me in Wordle X)\nEnter positions as contiguous digits (e.g. 013). Enter 'none' for no positions.\n\n";
+    cout << "Hi sucker. Try defeating me in Wordle X)\nEnter result of guess\n\n";
 
     ifstream file("words.txt");
     if (!file) {
@@ -159,40 +106,40 @@ int play(const string &hiddenWord = "") {
         return 0;
     }
 
-    string allowed, word;
+    string allowed, guess;
     vector<string> words;
-    string correct, inaccurate;
+    string result;
     int guesses = 0;
 
     while (file >> allowed)
         words.push_back(allowed);
 
     while (guesses < 6) {
-        word = guessWord(words);
-        if (word.empty()) {
+        guess = guessWord(words);
+
+        if (guess.empty()) {
             cout << "No words left.\n";
+            return 1;
+        }
+
+        cout << "\nGuess #" << guesses + 1 << ": " << guess << "\n\n";
+
+        cout << "Enter the result of guess: ";
+        cin >> result;
+
+        transform(result.begin(), result.end(), result.begin(), ::toupper);
+
+        if (!validateResult(result)) {
+            cout << "Invalid Result!";
+            return 1;
+        }
+
+        if (result == "GGGGG") {
+            cout << "I won HAHA";
             return 0;
         }
 
-        cout << "\nGuess #" << guesses + 1 << ": " << word << "\n\n";
-
-        cout << "Enter the positions of correct letters: ";
-        cin >> correct;
-        if (correct == "none")
-            correct.clear();
-
-        if (correct.size() == 5)
-        {
-            cout << "I won! haha! you suck lol\n";
-            return 0;
-        }
-
-        cout << "Enter the positions of inaccurate letters: ";
-        cin >> inaccurate;
-        if (inaccurate == "none")
-            inaccurate.clear();
-
-        eliminateOptions(words, word, correct, inaccurate);
+        eliminateOptions(words, guess, result);
         ++guesses;
     }
 
