@@ -23,7 +23,7 @@ size_t writeCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     return totalSize;
 }
 
-void fetchWords(string& responseStr) {
+void fetchWords(string &responseStr) {
     CURL *curl;
     CURLcode res;
 
@@ -35,20 +35,19 @@ void fetchWords(string& responseStr) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseStr);
 
+        // Follow redirects if any
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
         res = curl_easy_perform(curl);
+
         if (res != CURLE_OK) 
-            cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << endl;
+            cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
         
 
         curl_easy_cleanup(curl);
     }
 
     curl_global_cleanup();
-
-    vector<std::string> words;
-    stringstream ss(responseStr);
 }
 
 string guessWord(const vector<string> &words) {
@@ -110,48 +109,14 @@ void eliminateOptions(vector<string> &words, const string &guess, const string& 
 
 int play(const string &hiddenWord = "") {
 
-    // Internal Testing Purposes
-    if (!hiddenWord.empty()) {
-        ifstream file("words.txt");
-
-        vector<string> words;
-        string allowed;
-        while (file >> allowed)
-            words.push_back(allowed);
-
-        int guesses = 0;
-        while (guesses < 6) {
-            string guess = guessWord(words);
-            if (guess.empty())
-                return -1;
-
-            if (guess == hiddenWord)
-                return guesses + 1;
-
-            string correct, inaccurate;
-
-            eliminateOptions(words, guess, getFeedback(hiddenWord, guess));
-            ++guesses;
-        }
-
-        return -1;
-    }
-
     cout << "Hi sucker. Try defeating me in Wordle X)\nEnter result of guess\n\n";
-
-    // ifstream file("words.txt");
-    // if (!file) {
-    //     cerr << "Could not open words.txt\n";
-    //     return 0;
-    // }
 
     string allowed, guess, fetchResponse, line;
     vector<string> words;
     string result;
     int guesses = 0;
 
-    // while (file >> allowed)
-    //     words.push_back(allowed);
+    fetchWords(fetchResponse);
 
     stringstream ss(fetchResponse);
 
