@@ -109,8 +109,6 @@ void eliminateOptions(vector<string> &words, const string &guess, const string& 
 
 int play(const string &hiddenWord = "") {
 
-    cout << "Hi sucker. Try defeating me in Wordle X)\nEnter result of guess\n\n";
-
     string allowed, guess, fetchResponse, line;
     vector<string> words;
     string result;
@@ -120,9 +118,30 @@ int play(const string &hiddenWord = "") {
 
     stringstream ss(fetchResponse);
 
-    while (getline(ss, line)) 
+    while (getline(ss, line))
         if (!line.empty())
             words.push_back(line);
+
+    if (!hiddenWord.empty()) {
+        int guesses = 0;
+        while (guesses < 6) {
+            string guess = guessWord(words);
+            if (guess.empty())
+                return -1;
+
+            if (guess == hiddenWord)
+                return guesses + 1;
+
+            string correct, inaccurate;
+
+            eliminateOptions(words, guess, getFeedback(hiddenWord, guess));
+            ++guesses;
+        }
+
+        return -1;
+    }
+
+    cout << "Hi sucker. Try defeating me in Wordle X)\nEnter result of guess\n\n";
 
     while (guesses < 6) {
         guess = guessWord(words);
