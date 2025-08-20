@@ -6,11 +6,50 @@
 #include <algorithm>
 #include <cctype>
 #include<unordered_map>
+#include <sstream>
+#include <curl/curl.h>
 
 using namespace std;
 
 random_device rd;
 mt19937 gen(rd());
+
+string url = "https://gist.githubusercontent.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b/raw/c46f451920d5cf6326d550fb2d6abb1642717852/wordle-answers-alphabetical.txt";
+
+size_t writeCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+    size_t totalSize = size * nmemb;
+    string* buffer = static_cast<string*>(userp);
+    buffer -> append(static_cast<char*>(contents), totalSize);
+    return totalSize;
+}
+
+void fetchWords(string& responseStr) {
+    CURL *curl;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+
+    if (curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseStr);
+
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+        res = curl_easy_perform(curl);
+        if (res != CURLE_OK) 
+            cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << endl;
+        
+
+        curl_easy_cleanup(curl);
+    }
+
+    curl_global_cleanup();
+
+    vector<std::string> words;
+    stringstream ss(responseStr);
+}
 
 string guessWord(const vector<string> &words) {
     if (words.empty()) return "";
@@ -100,19 +139,25 @@ int play(const string &hiddenWord = "") {
 
     cout << "Hi sucker. Try defeating me in Wordle X)\nEnter result of guess\n\n";
 
-    ifstream file("words.txt");
-    if (!file) {
-        cerr << "Could not open words.txt\n";
-        return 0;
-    }
+    // ifstream file("words.txt");
+    // if (!file) {
+    //     cerr << "Could not open words.txt\n";
+    //     return 0;
+    // }
 
-    string allowed, guess;
+    string allowed, guess, fetchResponse, line;
     vector<string> words;
     string result;
     int guesses = 0;
 
-    while (file >> allowed)
-        words.push_back(allowed);
+    // while (file >> allowed)
+    //     words.push_back(allowed);
+
+    stringstream ss(fetchResponse);
+
+    while (getline(ss, line)) 
+        if (!line.empty())
+            words.push_back(line);
 
     while (guesses < 6) {
         guess = guessWord(words);
