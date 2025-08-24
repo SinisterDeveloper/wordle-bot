@@ -8,6 +8,8 @@
 #include<unordered_map>
 #include <sstream>
 #include <curl/curl.h>
+#undef min
+#undef max
 
 using namespace std;
 
@@ -35,27 +37,18 @@ void fetchWords(string &responseStr) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseStr);
 
-        // Follow redirects if any
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
         res = curl_easy_perform(curl);
 
         if (res != CURLE_OK) 
-            cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+            cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << "\n";
         
 
         curl_easy_cleanup(curl);
     }
 
     curl_global_cleanup();
-}
-
-string guessWord(const vector<string> &words) {
-    if (words.empty()) return "";
-
-    uniform_int_distribution<int> dist(0, static_cast<int>(words.size()) - 1);
-
-    return words[dist(gen)];
 }
 
 auto validateResult = [](const string &r) {
@@ -97,7 +90,7 @@ string getFeedback(string word, string guess) {
     return feedback;
 }
 
-void eliminateOptions(vector<string> &words, const string &guess, const string& result) {
+int eliminateOptions(vector<string> &words, const string &guess, const string& result) {
     words.erase(
         remove_if(words.begin(), words.end(),
                   [&guess, &result](const string &word) -> bool
@@ -105,7 +98,34 @@ void eliminateOptions(vector<string> &words, const string &guess, const string& 
                       return getFeedback(word, guess) != result;
                   }),
         words.end());
+
+    return words.size();
 }
+
+string guessWord(const vector<string> &words) {
+    string bestWord;
+    int bestScore = INT_MAX;
+
+    for (const string &candidate : words) {
+        unordered_map<string, int> partitions;
+
+        for (const string &target : words) {
+            string feedback = getFeedback(target, candidate);
+            partitions[feedback]++;
+        }
+
+        int worstCase = 0;
+        for (auto &p : partitions) worstCase = max(worstCase, p.second);
+
+        if (worstCase < bestScore) {
+            bestScore = worstCase;
+            bestWord = candidate;
+        }
+    }
+
+    return bestWord;
+}
+
 
 int play(const string &hiddenWord = "") {
 
@@ -141,10 +161,12 @@ int play(const string &hiddenWord = "") {
         return -1;
     }
 
-    cout << "Hi sucker. Try defeating me in Wordle X)\nEnter result of guess\n\n";
+    cout << "Hi sucker. Try defeating me in Wordle X)\n\n";
 
     while (guesses < 6) {
-        guess = guessWord(words);
+        uniform_int_distribution<int> dist(0, static_cast<int>(words.size()) - 1);
+
+        guess = guesses == 0 ? words[dist(gen)] : guessWord(words);
 
         if (guess.empty()) {
             cout << "No words left.\n";
