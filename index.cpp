@@ -119,7 +119,6 @@ int solveForWord(const string &hiddenWord, const vector<string> &allWords) {
 }
 
 void playInteractive() {
-    cout << "Fetching word list, please wait...\n";
     string fetchResponse;
     fetchWords(fetchResponse);
 
@@ -130,7 +129,7 @@ void playInteractive() {
         if (!line.empty()) words.push_back(line);
     
     
-    cout << "\nHi sucker. Try defeating me in Wordle X)\n";
+    cout << "\nThe game begins! Good luck...\n";
 
     for (int guesses = 0; guesses < 6; ++guesses) {
         string guess;
@@ -141,7 +140,7 @@ void playInteractive() {
     
 
         if (guess.empty()) {
-            cout << "I'm stumped! You must have made a mistake with the feedback.\n";
+            cout << "I'm out of words! You must have made a mistake in one of your results. Play the game again without making a mistake\n";
             return;
         }
 
@@ -153,11 +152,11 @@ void playInteractive() {
         transform(result.begin(), result.end(), result.begin(), ::toupper);
 
         if (!validateResult(result)) {
-            cout << "Invalid Result! Please use 5 characters: G, Y, or B.\n";
+            cout << "Invalid Result! Please use 5 characters: G (Green), Y (Yellow), or B (Black/Grey).\n";
             return;
         }
         if (result == "GGGGG") {
-            cout << "\nI won in " << guesses + 1 << " guesses! HAHA.\n";
+            cout << "\nI won in " << guesses + 1 << " guesses! HAHA\n";
             return;
         }
         eliminateOptions(words, guess, result);
@@ -170,72 +169,89 @@ int main() {
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
     int option;
-    cout << "Hi! I'm Wordle-Bot developed by SinisterDeveloper\n\n[1] - New Game\n[2] - Testing\n\n[3] - View Code Repository\n\nPick an option(number): ";
+    cout << "Hi! I'm a Wordle Solver developed by SinisterDeveloper (https://github.com/SinisterDeveloper)\n\n[1] - New Game\n\n[2] - How to Use\n\n[3] - View Code Repository\n\n[4] - Testing\n\nPick an option(number): ";
     cin >> option;
 
-    if (option == 1) 
-        playInteractive();
-     
-    else if (option == 2) {
-        cout << "Fetching word list for testing...\n";
-        string fetchResponse;
-        fetchWords(fetchResponse);
+    switch (option) {
+        case 1: 
+            playInteractive();
+            break;
 
-        vector<string> allWords;
-        stringstream ss(fetchResponse);
-        string line;
-        while (getline(ss, line)) {
-            if (!line.empty()) allWords.push_back(line);
-        }
+        case 2:
+            cout << "\n\nI will display the word I guess\n\nUse the word in the official Wordle gane and tell me the result\n\nUse 'G' for a Green square, 'Y' for a Yellow square, and 'B' for a Black/Grey square"
+                 << "\n\nFor example, if the result is [Green][Yellow][Black][Black][Green], you would type GYBBG and press Enter" << "\n\n";
+            break;
 
-        if (allWords.empty()) {
-            cerr << "Failed to fetch or parse the word list. Cannot run tests.\n";
-            return 1;
-        }
-        
-        cout << "Starting tests against the fetched word list (" << allWords.size() << " words)...\n";
-        cout << "This will take some time.\n";
-        int totalGuesses = 0;
-        int failures = 0;
-        int maxGuesses = 0;
-        string worstWord;
-        int wordsTested = 0;
+        case 3:
+            cout << "\n\nThe code for this program is FOSS (Free and Open Source Software)\n\nYou can view the code repository here: https://github.com/SinisterDeveloper/wordle-bot\n\nStar the repository if you like the bot!\n\n";
+            break;
 
-        for (const auto &hidden : allWords) {
-            wordsTested++;
+        case 4: {
+            cout << "Fetching word list for testing...\n";
+            string fetchResponse;
+            fetchWords(fetchResponse);
 
-            cout << "\rTesting [" << wordsTested << "/" << allWords.size() << "]: " << hidden << flush;
+            vector<string> allWords;
+            stringstream ss(fetchResponse);
+            string line;
+            while (getline(ss, line)) {
+                if (!line.empty()) allWords.push_back(line);
+            }
 
-            int result = solveForWord(hidden, allWords);
-            if (result == -1) {
-                ++failures;
-                cout << "\n >> Failed on: " << hidden << '\n';
-            } else {
-                totalGuesses += result;
-                if (result > maxGuesses) {
-                    maxGuesses = result;
-                    worstWord = hidden;
+            if (allWords.empty()) {
+                cerr << "Failed to fetch or parse the word list. Cannot run tests.\n";
+                return 1;
+            }
+            
+            cout << "Starting tests against the fetched word list (" << allWords.size() << " words)...\n";
+            cout << "This will take some time...\n";
+            int totalGuesses = 0;
+            int failures = 0;
+            int maxGuesses = 0;
+            string worstWord;
+            int wordsTested = 0;
+
+            for (const auto &hidden : allWords) {
+                wordsTested++;
+
+                cout << "\rTesting [" << wordsTested << "/" << allWords.size() << "]: " << hidden << flush;
+
+                int result = solveForWord(hidden, allWords);
+                if (result == -1) {
+                    ++failures;
+                    cout << "\n >> Failed on: " << hidden << '\n';
+                } else {
+                    totalGuesses += result;
+                    if (result > maxGuesses) {
+                        maxGuesses = result;
+                        worstWord = hidden;
+                    }
                 }
             }
+
+            cout << "\n";
+
+            int succeeded = static_cast<int>(allWords.size()) - failures;
+            cout << "\n----------- Testing Complete -----------\n";
+            cout << "Total Words Tested: " << allWords.size() << '\n';
+            cout << "Successes: " << succeeded << " (" << (double)succeeded / allWords.size() * 100.0 << "%)\n";
+            cout << "Failures: " << failures << '\n';
+
+            if (succeeded > 0) 
+                cout << "Average Guesses (for successes): " << static_cast<double>(totalGuesses) / succeeded << '\n';
+            
+            if (!worstWord.empty()) 
+                cout << "Hardest Word: " << worstWord << " (" << maxGuesses << " guesses)\n";
+
+            break;
         }
 
-        cout << "\n";
-
-        int succeeded = static_cast<int>(allWords.size()) - failures;
-        cout << "\n--- Testing Complete ---\n";
-        cout << "Total Words Tested: " << allWords.size() << '\n';
-        cout << "Successes: " << succeeded << " (" << (double)succeeded / allWords.size() * 100.0 << "%)\n";
-        cout << "Failures: " << failures << '\n';
-
-        if (succeeded > 0) 
-            cout << "Average Guesses (for successes): " << static_cast<double>(totalGuesses) / succeeded << '\n';
-        
-        if (!worstWord.empty()) 
-            cout << "Hardest Word: " << worstWord << " (" << maxGuesses << " guesses)\n";
-    
+        default:
+            cout << "Invalid Option Chosen!";
     }
 
     curl_global_cleanup();
+    cin.get();
     return 0;
 }
 
