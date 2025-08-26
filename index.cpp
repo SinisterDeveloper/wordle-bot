@@ -9,6 +9,7 @@
 #include <sstream>
 #include <curl/curl.h>
 #undef min
+#undef max
 
 using namespace std;
 
@@ -249,9 +250,12 @@ int main() {
         default:
             cout << "Invalid Option Chosen!";
     }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-    curl_global_cleanup();
+    cout << "Press Enter to exit...";
     cin.get();
+    curl_global_cleanup();
+    
     return 0;
 }
 
