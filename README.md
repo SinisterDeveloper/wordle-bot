@@ -16,9 +16,11 @@ WordleMax is a Wordle solver/bot programmed by [SinisterDeveloper](https://githu
 ### Windows (One of the below): 
 
 * `Release` - Find the latest release in the `Releases` section, unzip the content and run `wordle.exe`
-* `Compile` - if you want to compile the code yourself, [read here]()
+* `Compile` - if you want to compile the code yourself, [read here](https://github.com/SinisterDeveloper/wordle-bot/blob/stable/BUILD.md)
 
-### [Linux]()
+### Linux
+
+[Read here](https://github.com/SinisterDeveloper/wordle-bot/blob/stable/BUILD.md) to easily compile the code in couple of commands and run on your preferred Linux distro
 
 ## Algorithm
 
