@@ -1,0 +1,42 @@
+name: Validate Wordle Solution List
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  check_wordle_list:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify Wordle solution list
+        run: |
+          URL="https://gist.githubusercontent.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b/raw/c46f451920d5cf6326d550fb2d6abb1642717852/wordle-answers-alphabetical.txt"
+
+          # Check HTTP status
+          status_code=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          if [ "$status_code" -ne 200 ]; then
+            echo "URL is not valid, returned status $status_code"
+            exit 1
+          fi
+
+          # Fetch content, remove blank/whitespace lines
+          content=$(curl -s "$URL" | sed '/^[[:space:]]*$/d')
+
+          # Check each line is exactly 5 letters
+          invalid_lines=$(echo "$content" | grep -vE '^[a-z]{5}$')
+          if [ -n "$invalid_lines" ]; then
+            echo "Found lines that are not 5 lowercase letters:"
+            echo "$invalid_lines"
+            exit 1
+          fi
+
+          # Count total words
+          total_words=$(echo "$content" | wc -l)
+          if [ "$total_words" -lt 2300 ]; then
+            echo "Word list too short: $total_words words (minimum 2300 required)"
+            exit 1
+          fi
+
+          echo "Wordle solution list is valid with $total_words words"
